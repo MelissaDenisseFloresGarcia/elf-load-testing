@@ -42,8 +42,8 @@ The load testing script was executed outside the Docker containers.
 
 ```text
 elf-load-testing/
-├── ddos.py
-└── README.md
+â”œâ”€â”€ ddos.py
+â””â”€â”€ README.md
 ```
 
 The `ddos.py` file contains the controlled HTTP load testing script.
@@ -255,49 +255,7 @@ The `/products` endpoint was successfully tested using the generated JWT.
 
 ## Fail2Ban Protection
 
-The three Docker services were protected using Fail2Ban.
-
-The active Fail2Ban jails were:
-
-```text
-elf-nginx
-elf-backend
-elf-ldap-http
-elf-ldap-tls
-```
-
-The corresponding log files were configured for monitoring:
-
-```text
-Frontend:
-C:\Users\Melfl\elf-dashboard\logs\http.log
-
-Backend:
-C:\Users\Melfl\elf-backend\logs\http.log
-
-LDAP HTTP:
-C:\Users\Melfl\elf-ldap\logs\http.log
-
-LDAP TLS:
-C:\Users\Melfl\elf-ldap\logs\tls.log
-```
-
-The LDAP TLS service has an additional Fail2Ban protection at the port level.
-
-The TLS protection was configured for:
-
-```text
-Port: 636
-```
-
-The configuration was verified as:
-
-```text
-[elf-ldap-tls]
-port = 636
-```
-
----
+See the verification status at the end of this document.
 
 ## JWT Console Log Removal
 
@@ -591,16 +549,7 @@ These checks confirmed that the services remained available after the controlled
 
 # Security Summary
 
-The security-related changes implemented during the practice were:
-
-- Fail2Ban protection for the Frontend HTTP service.
-- Fail2Ban protection for the Backend HTTP service.
-- Fail2Ban protection for the LDAP HTTP service.
-- Additional Fail2Ban protection for LDAP TLS on port 636.
-- HTTP request logging for the protected services.
-- JWT authentication for the Backend `/products` endpoint.
-- Removal of the JWT-related `console.log` from the Frontend.
-- The load testing script was kept outside the Docker images.
+Fail2Ban firewall enforcement was validated in an isolated laboratory. Login rate limiting was verified on the LDAP HTTP and HTTPS test services. Original-container enforcement remains pending.
 
 ---
 
@@ -646,6 +595,29 @@ The `ddos.py` script was modified to accept the target host and port as command-
 
 The script was executed outside the three Docker images as required by the practice.
 
-Fail2Ban protection was implemented for the Frontend, Backend, LDAP HTTP, and LDAP TLS services, with additional port-level protection configured for LDAP TLS on port 636.
+Fail2Ban automatic blocking was verified in an isolated Docker laboratory. Enforcement on the original services remains pending.
 
 The JWT console logging was removed from the Frontend and the application was rebuilt successfully after the modification.
+## Fail2Ban Verification Status
+
+Fail2Ban was successfully tested in an isolated Docker laboratory.
+
+Verified:
+- Failed login attempts were detected from HTTP logs.
+- Fail2Ban automatically installed an iptables REJECT rule.
+- The test client was blocked (HTTP 000).
+- Connectivity was restored after removing the firewall rule.
+- LDAP HTTP and TLS login logs matched the Fail2Ban filter.
+
+Additional application protection:
+- Rate limiting was tested on HTTP and HTTPS.
+- The sixth login request returned HTTP 429.
+
+Limitations:
+- Fail2Ban enforcement on the three original Docker services
+  has not yet been verified.
+- Port 636 was tested with HTTPS, not native LDAP over TLS.
+- Docker gateway IP handling requires additional configuration.
+
+The isolated laboratory results must not be interpreted
+as production deployment verification.
